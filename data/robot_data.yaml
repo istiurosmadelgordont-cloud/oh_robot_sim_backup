@@ -1,0 +1,157 @@
+pgm_map: /root/workspace/robot-sim-tutorial/lab5_gz_sim/robot-nav2/maps/standard_map.yaml
+annotations:
+  - map_transform:
+      translation:
+        x: 0.81117405420201405
+        y: -3.7771061203263558
+        z: 0.091000000000000025
+      rotation:
+        w: 6.1488722473838583e-310
+        x: 1.3906499416490908e-309
+        y: 4.8359974268559483e-310
+        z: 4.8359974268559483e-310
+    position:
+      x: 0.26663081639858305
+      y: -3.9064127176922692
+      z: 0
+    orientation:
+      w: 0.98396595640694928
+      x: 0
+      y: 0
+      z: -0.17835637536168319
+    image:
+      width: 800
+      height: 600
+      encoding: rgb8
+      frame_id: camera_optical_link
+      image_file: robot_data_2025-11-22_11-52-13.jpg
+      depth_image_file: robot_data_2025-11-22_11-52-13_depth.png
+    text: entry
+  - map_transform:
+      translation:
+        x: 0.11909013271971447
+        y: 0.3719136109544865
+        z: 0.091000000000000011
+      rotation:
+        w: 6.1488722473838583e-310
+        x: 1.3906499416490908e-309
+        y: 4.8359974268559483e-310
+        z: 4.8359974268559483e-310
+    position:
+      x: -1.4239092099309056
+      y: 0.12335544440159357
+      z: 0
+    orientation:
+      w: 0.6540792547480494
+      x: 0
+      y: 0
+      z: 0.7564260231564196
+    image:
+      width: 800
+      height: 600
+      encoding: rgb8
+      frame_id: camera_optical_link
+      image_file: robot_data_2025-11-22_11-53-08.jpg
+      depth_image_file: robot_data_2025-11-22_11-53-08_depth.png
+    text: living room
+  - map_transform:
+      translation:
+        x: -5.2931882272203659
+        y: -2.7168305028125603
+        z: 0.090999999999999998
+      rotation:
+        w: 6.1488722473838583e-310
+        x: 1.3906499416490908e-309
+        y: 4.8359974268559483e-310
+        z: 4.8359974268559483e-310
+    position:
+      x: -4.6050728699423935
+      y: -4.8585901182216507
+      z: 0
+    orientation:
+      w: -0.72615955909143171
+      x: -0
+      y: 0
+      z: 0.68752621385670643
+    image:
+      width: 800
+      height: 600
+      encoding: rgb8
+      frame_id: camera_optical_link
+      image_file: robot_data_2025-11-22_11-54-19.jpg
+      depth_image_file: robot_data_2025-11-22_11-54-19_depth.png
+    text: ballroom
+  - map_transform:
+      translation:
+        x: -10.035572212543203
+        y: -2.613972223482758
+        z: 0.090999999999999998
+      rotation:
+        w: 6.1488722473838583e-310
+        x: 1.3906499416490908e-309
+        y: 4.8359974268559483e-310
+        z: 4.8359974268559483e-310
+    position:
+      x: -8.7465493253352804
+      y: -5.3785015361952295
+      z: 0
+    orientation:
+      w: -0.87882458338729852
+      x: -0
+      y: 0
+      z: 0.47714500063831883
+    image:
+      width: 800
+      height: 600
+      encoding: rgb8
+      frame_id: camera_optical_link
+      image_file: robot_data_2025-11-22_11-55-31.jpg
+      depth_image_file: robot_data_2025-11-22_11-55-31_depth.png
+    text: study room
+  - map_transform:
+      translation:
+        x: -9.5988988273316895
+        y: 1.8103236378625964
+        z: 0.091000000000000011
+      rotation:
+        w: 6.1488722473838583e-310
+        x: 1.3906499416490908e-309
+        y: 4.8359974268559483e-310
+        z: 4.8359974268559483e-310
+    position:
+      x: -10.410079182706875
+      y: -1.5281149722350271
+      z: 0
+    orientation:
+      w: 0.22596463404603354
+      x: 0
+      y: 0
+      z: 0.97413550605675092
+    image:
+      width: 800
+      height: 600
+      encoding: rgb8
+      frame_id: camera_optical_link
+      image_file: robot_data_2025-11-22_11-56-38.jpg
+      depth_image_file: robot_data_2025-11-22_11-56-38_depth.png
+    text: bedroom
+  - map_transform:
+      translation:
+        x: -3.8499999999999996
+        y: 1.5800000000000001
+        z: 0
+      rotation:
+        w: 0
+        x: 0
+        y: 0
+        z: 0
+    position:
+      x: 5.9733235477697309e-302
+      y: 6.1488699480149906e-310
+      z: .nan
+    orientation:
+      w: 5.434722104253712e-323
+      x: 0
+      y: 6.148864102355564e-310
+      z: 4.8359974199113616e-310
+    text: kitchen

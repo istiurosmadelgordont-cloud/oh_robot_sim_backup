@@ -1,0 +1,29 @@
+assets/models/sdf/*/
+!assets/models/sdf/assets_models_*.tar.xz
+media/*
+!media/*.png
+build
+build-jazzy
+install
+install-jazzy
+log
+*.log
+*.db
+
+# downloaded
+mujoco
+
+venv
+
+# vscode
+**/.vscode
+**/.devcontainer
+
+# mujoco log
+**/MUJOCO_LOG.TXT
+
+# training data
+/**/oh_agent/train/images
+/**/oh_agent/train/labels
+
+*.pose
