@@ -1,0 +1,62 @@
+syntax = "proto3";
+
+package servo_control;
+
+// Service for controlling servo movements
+service ServoControl {
+  // Send twist command for Cartesian movement
+  rpc SendTwistCommand(TwistCommand) returns (CommandResponse);
+  
+  // Send joint command for joint movement
+  rpc SendJointCommand(JointCommand) returns (CommandResponse);
+  
+  // Set the reference frame for twist commands
+  rpc SetReferenceFrame(FrameCommand) returns (CommandResponse);
+  
+  // Reverse joint direction
+  rpc ReverseJointDirection(Empty) returns (CommandResponse);
+  
+  // Get current status
+  rpc GetStatus(Empty) returns (StatusResponse);
+}
+
+// Twist command for Cartesian movement
+message TwistCommand {
+  double linear_x = 1;
+  double linear_y = 2;
+  double linear_z = 3;
+  double angular_x = 4;
+  double angular_y = 5;
+  double angular_z = 6;
+}
+
+// Joint command for individual joint movement
+message JointCommand {
+  string joint_name = 1;  // e.g., "panda_joint1"
+  double velocity = 2;
+}
+
+// Frame selection command
+message FrameCommand {
+  enum FrameType {
+    BASE_FRAME = 0;     // World/base frame
+    END_EFFECTOR_FRAME = 1;  // End-effector frame
+  }
+  FrameType frame = 1;
+}
+
+// Empty message for parameterless calls
+message Empty {}
+
+// Response for commands
+message CommandResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+// Status response
+message StatusResponse {
+  bool active = 1;
+  string current_frame = 2;
+  double joint_velocity_multiplier = 3;
+}

@@ -1,0 +1,6 @@
+# Request
+string command        # e.g.  w a s d q e r f
+bool  blocking        # execute synchronously?
+---
+bool  success
+string message

@@ -1,0 +1,12 @@
+aiosqlite
+sqlalchemy
+sqlmodel
+pydantic
+openai
+anthropic
+fastapi
+mcp
+fastmcp
+grpcio==1.74.1
+grpcio-tools==1.74.1
+protobuf

@@ -1,0 +1,1 @@
+robot_sim_dto/PixelPosition[] points

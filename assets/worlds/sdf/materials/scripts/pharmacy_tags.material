@@ -1,0 +1,29 @@
+material PharmacyTag/QR_01
+{
+  receive_shadows off
+  technique
+  {
+    pass
+    {
+      texture_unit
+      {
+        texture qr_01.png
+      }
+    }
+  }
+}
+
+material PharmacyTag/Text_01
+{
+  receive_shadows off
+  technique
+  {
+    pass
+    {
+      texture_unit
+      {
+        texture text_01.png
+      }
+    }
+  }
+}
