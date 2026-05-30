@@ -1,0 +1,156 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="smart_executor">
+
+    <!-- Include diffdrive_car components -->
+    <xacro:include filename="$(find diffdrive_car_desc)/urdf/base.urdf.xacro" />
+    <xacro:include filename="$(find diffdrive_car_desc)/urdf/sensors/imu.urdf.xacro" />
+    <xacro:include filename="$(find diffdrive_car_desc)/urdf/sensors/laser.urdf.xacro" />
+    
+    <xacro:include filename="$(find diffdrive_car_desc)/urdf/actuator/wheel.urdf.xacro" />
+    <xacro:include filename="$(find diffdrive_car_desc)/urdf/actuator/caster.urdf.xacro" />
+
+    <!-- Instantiate car base and sensors -->
+    <xacro:base_xacro length="0.12" radius="0.1" />
+    <xacro:imu_xacro xyz="0 0 0.02" />
+    <xacro:laser_xacro xyz="0 0 0.10" />
+    
+    <xacro:wheel_xacro wheel_name="left" xyz="0 0.10 -0.06" />
+    <xacro:wheel_xacro wheel_name="right" xyz="0 -0.10 -0.06" />
+    <xacro:caster_xacro caster_name="front" xyz="0.08 0.0 -0.076" />
+    <xacro:caster_xacro caster_name="back" xyz="-0.08 0.0 -0.076" />
+
+    <!-- Include Franka Panda -->
+    <xacro:include filename="$(find panda_description)/urdf/panda.urdf" />
+
+    <!-- Joint to mount Panda on the car -->
+    <joint name="car_to_panda_base" type="fixed">
+        <parent link="base_link" />
+        <child link="panda_link0" />
+        <origin xyz="0.05 0.0 0.12" rpy="0 0 0" />
+    </joint>
+
+    <!-- Eye-in-Hand Camera -->
+    <!-- We create a small camera link and attach it to panda_hand -->
+    <link name="eye_camera_link">
+        <visual>
+            <geometry>
+                <box size="0.02 0.04 0.02"/>
+            </geometry>
+            <material name="black">
+                <color rgba="0.1 0.1 0.1 1"/>
+            </material>
+        </visual>
+    </link>
+
+    <joint name="panda_hand_to_camera" type="fixed">
+        <parent link="panda_hand"/>
+        <child link="eye_camera_link"/>
+        <origin xyz="0.0 0.0 0.05" rpy="0 -1.5707963 0"/> <!-- Pointing forward from the hand -->
+    </joint>
+
+    <!-- Camera optical frame for Gazebo/ROS -->
+    <link name="eye_camera_optical_frame" />
+    <joint name="camera_optical_joint" type="fixed">
+        <parent link="eye_camera_link"/>
+        <child link="eye_camera_optical_frame"/>
+        <origin xyz="0 0 0" rpy="-1.5707963 0 -1.5707963"/>
+    </joint>
+
+    <!-- Unified ros2_control configuration for Gazebo/MuJoCo -->
+    <ros2_control name="SmartExecutorSystem" type="system">
+        <hardware>
+            <plugin>gazebo_ros2_control/GazeboSystem</plugin>
+        </hardware>
+
+        <!-- Differential drive joints -->
+        <joint name="left_wheel_joint">
+            <command_interface name="velocity">
+                <param name="min">-10</param>
+                <param name="max">10</param>
+            </command_interface>
+            <state_interface name="position"/>
+            <state_interface name="velocity"/>
+        </joint>
+        <joint name="right_wheel_joint">
+            <command_interface name="velocity">
+                <param name="min">-10</param>
+                <param name="max">10</param>
+            </command_interface>
+            <state_interface name="position"/>
+            <state_interface name="velocity"/>
+        </joint>
+
+        <!-- Panda arm joints -->
+        <joint name="panda_joint1">
+            <command_interface name="position" />
+            <state_interface name="position" />
+        </joint>
+        <joint name="panda_joint2">
+            <command_interface name="position" />
+            <state_interface name="position" />
+        </joint>
+        <joint name="panda_joint3">
+            <command_interface name="position" />
+            <state_interface name="position" />
+        </joint>
+        <joint name="panda_joint4">
+            <command_interface name="position" />
+            <state_interface name="position" />
+        </joint>
+        <joint name="panda_joint5">
+            <command_interface name="position" />
+            <state_interface name="position" />
+        </joint>
+        <joint name="panda_joint6">
+            <command_interface name="position" />
+            <state_interface name="position" />
+        </joint>
+        <joint name="panda_joint7">
+            <command_interface name="position" />
+            <state_interface name="position" />
+        </joint>
+        <joint name="panda_finger_joint1">
+            <command_interface name="position" />
+            <state_interface name="position" />
+        </joint>
+        <joint name="panda_finger_joint2">
+            <command_interface name="position" />
+            <state_interface name="position" />
+        </joint>
+    </ros2_control>
+
+    <!-- Gazebo Plugin -->
+    <gazebo>
+        <plugin filename="libgazebo_ros2_control.so" name="gazebo_ros2_control">
+            <parameters>$(find smart_executor_desc)/config/ros2_controllers.yaml</parameters>
+        </plugin>
+    </gazebo>
+
+    <!-- Gazebo Camera Sensor Plugin -->
+    <gazebo reference="eye_camera_link">
+        <sensor type="camera" name="eye_camera">
+            <update_rate>30.0</update_rate>
+            <camera name="head">
+                <horizontal_fov>1.3962634</horizontal_fov>
+                <image>
+                    <width>800</width>
+                    <height>800</height>
+                    <format>R8G8B8</format>
+                </image>
+                <clip>
+                    <near>0.02</near>
+                    <far>300</far>
+                </clip>
+            </camera>
+            <plugin name="camera_controller" filename="libgazebo_ros_camera.so">
+                <alwaysOn>true</alwaysOn>
+                <updateRate>0.0</updateRate>
+                <cameraName>camera</cameraName>
+                <imageTopicName>image_raw</imageTopicName>
+                <cameraInfoTopicName>camera_info</cameraInfoTopicName>
+                <frameName>eye_camera_optical_frame</frameName>
+            </plugin>
+        </sensor>
+    </gazebo>
+
+</robot>

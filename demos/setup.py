@@ -38,6 +38,7 @@ setup(
             'pda_softbus_monitor = demos.pda_softbus_monitor:main',
             'ward_task_server = demos.ward_task_server:main',
             'robot_executor = demos.robot_executor:main',
+            'vision_recognition_node = demos.vision_recognition_node:main',
         ],
     },
 )
