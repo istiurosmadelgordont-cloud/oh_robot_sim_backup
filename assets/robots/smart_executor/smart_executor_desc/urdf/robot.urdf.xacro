@@ -20,7 +20,7 @@
     <xacro:caster_xacro caster_name="back" xyz="-0.08 0.0 -0.076" />
 
     <!-- Include Franka Panda -->
-    <xacro:include filename="$(find panda_description)/urdf/panda.urdf" />
+    <xacro:include filename="$(find franka_panda_desc)/urdf/panda.urdf" />
 
     <!-- Joint to mount Panda on the car -->
     <joint name="car_to_panda_base" type="fixed">
