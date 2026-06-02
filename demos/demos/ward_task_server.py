@@ -27,15 +27,17 @@ class WardTaskServer(Node):
             10
         )
         
+        # Coordinates from hospital_ward.classic.world
+        # bed_w1_* are at y=3.9 (north ward), bed_w2_* at y=-3.9 (south ward)
         self.screens = {
-            '1': ('Bed_W1_1', -4.85, 4.85),
-            '2': ('Bed_W1_2', -2.95, 4.85),
-            '3': ('Bed_W1_3', -1.05, 4.85),
-            '4': ('Bed_W1_4',  0.85, 4.85),
-            '5': ('Bed_W2_1', -4.85, -4.85),
-            '6': ('Bed_W2_2', -2.95, -4.85),
-            '7': ('Bed_W2_3', -1.05, -4.85),
-            '8': ('Bed_W2_4',  0.85, -4.85),
+            '1': ('Bed_W1_1', -4.85, 3.9),
+            '2': ('Bed_W1_2', -2.95, 3.9),
+            '3': ('Bed_W1_3', -1.05, 3.9),
+            '4': ('Bed_W1_4',  0.85, 3.9),
+            '5': ('Bed_W2_1', -4.85, -3.9),
+            '6': ('Bed_W2_2', -2.95, -3.9),
+            '7': ('Bed_W2_3', -1.05, -3.9),
+            '8': ('Bed_W2_4',  0.85, -3.9),
         }
         
         self.medical_orders = {
@@ -67,8 +69,9 @@ class WardTaskServer(Node):
             
         if bed_key in self.screens:
             name, sx, sy = self.screens[bed_key]
-            # Teleport to 0.4m away from the screen
-            self.current_pda_pos = Point(x=sx, y=sy - 0.4, z=0.0)
+            # Teleport PDA to corridor side of bed (0.4m offset toward center corridor y=0)
+            pda_y = sy - 0.4 if sy > 0 else sy + 0.4
+            self.current_pda_pos = Point(x=sx, y=pda_y, z=0.0)
             self.get_logger().info(f'\n🚶 护士已携带 PDA 靠近 {name} (距离 0.4m)')
             
             # Wait a bit to let softbus trigger

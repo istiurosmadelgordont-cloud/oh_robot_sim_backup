@@ -4,17 +4,14 @@ import rclpy
 from rclpy.node import Node
 from sensor_msgs.msg import Image
 from geometry_msgs.msg import PointStamped
-import cv2
-from cv_bridge import CvBridge
+from std_msgs.msg import String
+import json
 
 class VisionRecognitionNode(Node):
     def __init__(self):
         super().__init__('vision_recognition_node')
         
-        self.bridge = CvBridge()
-        self.qr_detector = cv2.QRCodeDetector()
-        
-        # Subscribe to Eye-in-Hand camera
+        # Subscribe to Eye-in-Hand camera (if available)
         self.image_sub = self.create_subscription(
             Image,
             '/camera/image_raw',
@@ -22,50 +19,76 @@ class VisionRecognitionNode(Node):
             10
         )
         
+        # Subscribe to robot status to know when to "scan"
+        self.status_sub = self.create_subscription(
+            String,
+            '/robot_status',
+            self.status_callback,
+            10
+        )
+        
         # Publish detected medicine coordinates (in camera frame)
         self.target_pub = self.create_publisher(PointStamped, '/vision/target_medicine_pose', 10)
         
-        # Expected target QR code from the server
-        self.target_qr = None
-        self.get_logger().info('👁️ 视觉识别模块 (OpenCV) 已启动，等待摄像头画面...')
+        self.has_real_camera = False
+        self.scan_requested = False
+        
+        self.get_logger().info('👁️ 视觉识别模块 (OpenCV) 已启动，等待扫描指令...')
+
+    def status_callback(self, msg):
+        """Listen for robot status to know when vision scan is needed"""
+        if '视觉识别' in msg.data or '视觉扫描' in msg.data or '二维码' in msg.data:
+            self.get_logger().info('📡 收到扫描请求，启动视觉识别流程...')
+            # Use a timer to simulate processing delay
+            self.create_timer(1.5, self.publish_simulated_detection)
 
     def image_callback(self, msg):
+        """Process real camera images if available"""
+        self.has_real_camera = True
         try:
-            cv_image = self.bridge.imgmsg_to_cv2(msg, "bgr8")
+            from cv_bridge import CvBridge
+            import cv2
+            bridge = CvBridge()
+            cv_image = bridge.imgmsg_to_cv2(msg, "bgr8")
+            qr_detector = cv2.QRCodeDetector()
+            data, bbox, _ = qr_detector.detectAndDecode(cv_image)
+            
+            if bbox is not None and len(data) > 0:
+                self.get_logger().info(f'📷 扫描到二维码: {data}')
+                self.publish_detection(data)
         except Exception as e:
             self.get_logger().error(f"CV Bridge Error: {e}")
-            return
+
+    def publish_simulated_detection(self):
+        """Publish a simulated detection when no real camera is available"""
+        if self.has_real_camera:
+            return  # Don't simulate if we have a real camera
             
-        data, bbox, straight_qrcode = self.qr_detector.detectAndDecode(cv_image)
+        self.get_logger().info('📷 [模拟模式] 视觉扫描完成，识别到目标药品二维码！')
+        self.get_logger().info('📷 二维码内容: QR_MEDICINE_ASPIRIN | 置信度: 98.7%')
         
-        if bbox is not None and len(data) > 0:
-            # We found a QR Code
-            self.get_logger().info(f'📷 扫描到二维码: {data}')
-            
-            # Simple assumption: QR code is in the center of the bounding box
-            # To get 3D pose, we would need camera intrinsics + depth.
-            # Here we just mock the 3D position based on pixel coordinates for demonstration
-            # In a real physical sim, you'd use a Depth Camera (RGB-D) or PnP.
-            
-            target_msg = PointStamped()
-            target_msg.header.stamp = self.get_clock().now().to_msg()
-            target_msg.header.frame_id = 'eye_camera_optical_frame'
-            
-            # Mock depth = 0.3 meters ahead of camera
-            target_msg.point.x = 0.0
-            target_msg.point.y = 0.0
-            target_msg.point.z = 0.30 
-            
-            self.target_pub.publish(target_msg)
-            
-            # Draw bounding box for debug
-            n = len(bbox[0])
-            for i in range(n):
-                cv2.line(cv_image, tuple(bbox[0][i].astype(int)), tuple(bbox[0][(i+1) % n].astype(int)), color=(0, 255, 0), thickness=3)
+        target_msg = PointStamped()
+        target_msg.header.stamp = self.get_clock().now().to_msg()
+        target_msg.header.frame_id = 'eye_camera_optical_frame'
         
-        # If we wanted to visualize the camera feed:
-        # cv2.imshow("Eye-in-Hand View", cv_image)
-        # cv2.waitKey(1)
+        # Simulated target: 0.3m ahead of camera
+        target_msg.point.x = 0.0
+        target_msg.point.y = 0.0
+        target_msg.point.z = 0.30
+        
+        self.target_pub.publish(target_msg)
+        self.get_logger().info('✅ 目标药品 3D 坐标已发布至 /vision/target_medicine_pose')
+
+    def publish_detection(self, qr_data):
+        """Publish a real detection from QR code"""
+        target_msg = PointStamped()
+        target_msg.header.stamp = self.get_clock().now().to_msg()
+        target_msg.header.frame_id = 'eye_camera_optical_frame'
+        target_msg.point.x = 0.0
+        target_msg.point.y = 0.0
+        target_msg.point.z = 0.30
+        
+        self.target_pub.publish(target_msg)
 
 def main(args=None):
     rclpy.init(args=args)
