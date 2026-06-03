@@ -11,6 +11,7 @@ find_package(rclcpp REQUIRED)
 find_package(moveit REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(moveit_visual_tools REQUIRED)
+find_package(std_msgs REQUIRED)
 find_package(robot_sim_dto REQUIRED)
 
 set(PROJ_NAME car_arm_controller)
@@ -18,7 +19,7 @@ set(PROJ_NAME car_arm_controller)
 add_executable(${PROJ_NAME} src/car_arm_controller.cpp)
 add_executable(test_jog src/test_jog.cpp)
 
-ament_target_dependencies(${PROJ_NAME} robot_sim_dto rclcpp moveit geometry_msgs moveit_visual_tools)
+ament_target_dependencies(${PROJ_NAME} robot_sim_dto rclcpp moveit geometry_msgs moveit_visual_tools std_msgs)
 ament_target_dependencies(test_jog rclcpp geometry_msgs)
 
 

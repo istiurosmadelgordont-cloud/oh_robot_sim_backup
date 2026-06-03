@@ -22,6 +22,7 @@
 #include <sensor_msgs/msg/joint_state.hpp>
 
 #include <moveit_visual_tools/moveit_visual_tools.h>
+#include <std_msgs/msg/string.hpp>
 
 namespace rvt = rviz_visual_tools;
 
@@ -70,6 +71,14 @@ public:
         this->relative_move_sub_ = this->create_subscription<geometry_msgs::msg::Twist>(
             "/arm_relative_move", 10,
             std::bind(&CarArmController::relative_move_callback, this, std::placeholders::_1));
+
+        this->absolute_pose_sub_ = this->create_subscription<geometry_msgs::msg::PoseStamped>(
+            "/arm_absolute_pose", 10,
+            std::bind(&CarArmController::absolute_pose_callback, this, std::placeholders::_1));
+
+        this->named_pose_sub_ = this->create_subscription<std_msgs::msg::String>(
+            "/arm_named_pose", 10,
+            std::bind(&CarArmController::named_pose_callback, this, std::placeholders::_1));
 
         // Joint state publisher initialization
         this->joint_state_publisher_ = this->create_publisher<sensor_msgs::msg::JointState>(
@@ -180,6 +189,16 @@ public:
         target_pose.pose.orientation.z = rotation_delta.getZ();
 
         this->set_arm_pose(target_pose, false);
+    }
+
+    void absolute_pose_callback(const geometry_msgs::msg::PoseStamped::ConstSharedPtr msg) {
+        RCLCPP_INFO(this->get_logger(), "absolute_pose_callback: planning to frame %s", msg->header.frame_id.c_str());
+        this->set_arm_pose(*msg, false);
+    }
+
+    void named_pose_callback(const std_msgs::msg::String::ConstSharedPtr msg) {
+        RCLCPP_INFO(this->get_logger(), "named_pose_callback: planning to pose %s", msg->data.c_str());
+        this->set_arm_pose(msg->data, false);
     }
 
     /**
@@ -381,6 +400,8 @@ private:
     // std::shared_ptr<moveit_visual_tools::MoveItVisualTools> visual_tools;
 
     rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr relative_move_sub_;
+    rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr absolute_pose_sub_;
+    rclcpp::Subscription<std_msgs::msg::String>::SharedPtr named_pose_sub_;
 
     rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr joint_state_publisher_;
     rclcpp::TimerBase::SharedPtr joint_state_timer_;

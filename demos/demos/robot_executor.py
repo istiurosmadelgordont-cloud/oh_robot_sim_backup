@@ -33,9 +33,13 @@ class RobotExecutor(Node):
             self, NavigateToPose, 'navigate_to_pose',
             callback_group=self.cb_group)
         
+        self.arm_named_pose_pub = self.create_publisher(String, '/arm_named_pose', 10)
+        self.arm_abs_pose_pub = self.create_publisher(PoseStamped, '/arm_absolute_pose', 10)
+        
         self.current_task = None
         self.vision_target = None
-        self.nav_timeout = 60.0
+        self.nav_timeout = 120.0
+        self._active_goal_handle = None
         
         self.get_logger().info('🤖 复合智能执行体 (Mobile Manipulator) 已启动，等待取药任务...')
         
@@ -53,7 +57,8 @@ class RobotExecutor(Node):
         task = json.loads(msg.data)
         self.current_task = task
         self.get_logger().info(f'收到任务：前往药房取药 [{task["medicine"]}]，然后送往 [{task["bed"]}]')
-        self.execute_task(task)
+        # Run in separate thread to keep executor callback threads free for Nav2/vision responses
+        threading.Thread(target=self.execute_task, args=(task,), daemon=True).start()
         
     def vision_callback(self, msg):
         self.vision_target = msg
@@ -65,6 +70,20 @@ class RobotExecutor(Node):
             self.send_status('⚠️ Nav2 不在线，模拟导航 (3s)...')
             time.sleep(3.0)
             return True
+        
+        # Cancel any previous active goal before sending a new one
+        if hasattr(self, '_active_goal_handle') and self._active_goal_handle is not None:
+            try:
+                self.get_logger().info('取消上一个导航目标...')
+                cancel_future = self._active_goal_handle.cancel_goal_async()
+                # Wait briefly for cancellation to process
+                wait_start = time.time()
+                while not cancel_future.done() and (time.time() - wait_start) < 3.0:
+                    time.sleep(0.1)
+            except Exception:
+                pass
+            self._active_goal_handle = None
+            time.sleep(0.5)  # Let Nav2 settle after cancellation
             
         goal_msg = NavigateToPose.Goal()
         goal_msg.pose.header.frame_id = 'map'
@@ -77,7 +96,9 @@ class RobotExecutor(Node):
         
         # Send goal and wait for acceptance
         self.send_status('📡 发送导航目标...')
-        send_future = self.nav_client.send_goal_async(goal_msg)
+        send_future = self.nav_client.send_goal_async(
+            goal_msg,
+            feedback_callback=self._nav_feedback_callback)
         
         # Wait for goal response
         start = time.time()
@@ -91,6 +112,9 @@ class RobotExecutor(Node):
         if not goal_handle or not goal_handle.accepted:
             self.send_status('⚠️ 导航目标被拒绝，继续任务')
             return True
+        
+        # Store active goal handle for cleanup
+        self._active_goal_handle = goal_handle
             
         self.send_status('📡 导航目标已接受，机器人正在移动...')
         result_future = goal_handle.get_result_async()
@@ -103,14 +127,17 @@ class RobotExecutor(Node):
             if elapsed > self.nav_timeout:
                 self.send_status(f'⏱️ 导航超时({self.nav_timeout}s)，取消目标')
                 goal_handle.cancel_goal_async()
+                self._active_goal_handle = None
                 time.sleep(1.0)
                 return True
-            # Print progress every 10 seconds
-            if int(elapsed) % 10 == 0 and int(elapsed) > 0:
-                self.send_status(f'🚗 导航中... 已用时 {int(elapsed)}s')
         
+        self._active_goal_handle = None
         self.send_status('✅ 到达目标点！')
         return True
+    
+    def _nav_feedback_callback(self, feedback_msg):
+        """Log navigation progress from Nav2 feedback."""
+        pass  # Silently consume feedback to keep action client responsive
 
     def execute_task(self, task):
         self.send_status('=' * 40)
@@ -118,13 +145,18 @@ class RobotExecutor(Node):
         self.send_status('=' * 40)
         
         # ====== Phase 1: Navigate to pharmacy ======
-        # Pharmacy shelf at (5.0, 4.8), stop 30cm in front per spec
+        # Use waypoints to ensure robot can navigate through narrow doors reliably
         self.send_status('📍 Phase 1/7: 自主规划路径前往药剂室...')
-        self.navigate_to(5.0, 4.5)
+        self.navigate_to(-2.0, 0.0)   # Corridor junction (through door if in ward)
+        self.navigate_to(5.0, 0.0)    # Corridor near pharmacy
+        self.navigate_to(5.0, 4.5)    # Pharmacy shelf
         
         # ====== Phase 2: Arm scan pose ======
         self.send_status('🦾 Phase 2/7: 升起机械臂，进入视觉扫描姿态...')
-        time.sleep(2.0)
+        msg = String()
+        msg.data = 'extended'
+        self.arm_named_pose_pub.publish(msg)
+        time.sleep(3.0)
         
         # ====== Phase 3: Wait for vision ======
         self.vision_target = None
@@ -133,18 +165,33 @@ class RobotExecutor(Node):
         while self.vision_target is None and (time.time() - wait_start) < 5.0:
             time.sleep(0.2)
             
-        if self.vision_target:
-            self.send_status(f'👁️ 视觉锁定！坐标 (相机系): z={self.vision_target.point.z:.2f}m')
-        else:
-            self.send_status('📡 未收到摄像头反馈，启用预设抓取策略')
-            
         # ====== Phase 4: Grasp medicine ======
         self.send_status(f'已识别目标药品{task["medicine"]}，开始抓取')
-        time.sleep(2.0)
+        
+        if self.vision_target:
+            self.send_status(f'👁️ 视觉锁定！坐标 (相机系): x={self.vision_target.point.x:.2f}, y={self.vision_target.point.y:.2f}, z={self.vision_target.point.z:.2f}m')
+            
+            # Send physical arm to target coordinate
+            target_pose = PoseStamped()
+            target_pose.header = self.vision_target.header
+            target_pose.pose.position.x = self.vision_target.point.x
+            target_pose.pose.position.y = self.vision_target.point.y
+            target_pose.pose.position.z = self.vision_target.point.z
+            target_pose.pose.orientation.w = 1.0 # Default orientation matching camera
+            
+            self.arm_abs_pose_pub.publish(target_pose)
+            time.sleep(4.0) # Wait for arm to reach
+        else:
+            self.send_status('📡 未收到摄像头反馈，启用预设抓取策略')
+            time.sleep(2.0)
+            
         self.send_status('🦾 夹爪闭合，锁定药盒！')
         time.sleep(1.0)
         self.send_status('🦾 机械臂收回安全位')
-        time.sleep(1.0)
+        msg.data = 'ready'
+        self.arm_named_pose_pub.publish(msg)
+        time.sleep(3.0)
+        
         self.send_status(f'✅ 药盒 [{task["medicine"]}] 抓取完成！')
         
         # ====== Phase 5: Return to corridor ======
