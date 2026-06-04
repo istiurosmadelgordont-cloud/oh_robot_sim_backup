@@ -109,15 +109,10 @@ echo -e "Docker Extra Args: ${DOCKER_EXTRA_ARGS_CLEAN[@]}"
 echo -e "----------------------------\n"
 
 if [ "$IS_WINDOWS" = true ]; then
-    if [ -n "${WAYLAND_DISPLAY:-}" ]; then
-        # WSLg (Windows 11)
-        DISPLAY=${DISPLAY:-:0}
-        USE_XAUTH=false
-    else
-        # External X server (VcXsrv / X410)
-        DISPLAY=$(grep nameserver /etc/resolv.conf | awk '{print $2}'):0
-        USE_XAUTH=false
-    fi
+    # WSL2: always use WSLg X11 socket + GPU driver libs
+    DISPLAY=${DISPLAY:-:0}
+    USE_XAUTH=false
+    USE_WAYLAND=true
 else
     if [ -n "${WAYLAND_DISPLAY:-}" ]; then
         USE_WAYLAND=true
@@ -150,7 +145,6 @@ else
     -v /usr/lib/wsl:/usr/lib/wsl \
     -e LD_LIBRARY_PATH=/usr/lib/wsl/lib \
 	-v $XDG_RUNTIME_DIR_HOST:/run/user/$(id -u) \
-	-v /tmp/.X11-unix:/tmp/.X11-unix \
 	" ) \
 	$( [ "$USE_WAYLAND" = false ] && echo "\
 	-e DISPLAY=$DISPLAY \
@@ -159,6 +153,8 @@ else
 	" ) \
 	-p $SSH_PORT:22 \
 	-p $GRPC_PORT:50051 \
+    -e NVIDIA_DRIVER_CAPABILITIES=all \
+    -e QT_X11_NO_MITSHM=1 \
 	"${DOCKER_EXTRA_ARGS_CLEAN[@]}" \
         --name $CONT_NAME \
         $IMAGE_NAME \

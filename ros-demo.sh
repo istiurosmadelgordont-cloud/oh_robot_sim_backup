@@ -28,6 +28,6 @@ else
 		--ros-dist humble \
 		--image $IMAGE \
 		--name $CONT \
-		-- --net=host -v $PWD:/root/workspace
+		-- --net=host -v $PWD:/root/workspace --gpus all
 fi
 
