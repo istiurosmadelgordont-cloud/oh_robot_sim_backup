@@ -57,63 +57,29 @@ colcon build --packages-skip mujoco_ros2_control mujoco_ros2_simulation mujoco_r
 
 ---
 
-## 二、启动演示流程（需开 5 个终端）
+## 二、启动演示流程（一键启动，仅需 2 个终端）
 
-> 如果刚做完上面的编译，可以跳过步骤 1，直接从步骤 2 开始。
+> 💡 **重磅升级**：为了方便评委专家演示，我们已将原本繁琐的 5 个终端命令整合为**一键启动**！
 > **快速记忆口诀**：每次新开终端进入容器后，先念"三连"咒语加载环境：
 > `cd /root/workspace && source /opt/ros/humble/setup.bash && source install/setup.bash`
 
-### 📺 终端 A：启动 Gazebo 仿真 + Nav2 导航
+### 📺 终端 A：一键拉起所有核心节点
+这个终端将同时启动 Gazebo 物理世界、Nav2 导航、视觉识别节点、软总线模拟器以及机器人控制大脑！
 
 1. 打开 PowerShell -> `wsl -d Ubuntu`
 2. `cd /mnt/d/飞腾派/plan/2/oh_robot_sim && ./ros-demo.sh`
-3. 启动（注意设 DISPLAY 变量）：
+3. 启动全家桶（注意设 DISPLAY 变量）：
    ```bash
    cd /root/workspace
    source /opt/ros/humble/setup.bash
    source install/setup.bash
    export DISPLAY=:0
-   ros2 launch demos gzsim.nav2.launch.py
+   ros2 launch demos proj15_all.launch.py
    ```
-   *等待 Gazebo 和 RViz2 窗口弹出，看到医院病房场景和机器人。*
+   *等待几秒，Gazebo 窗口会弹出，随后各个后台节点会自动依次启动就绪。*
 
-### 📺 终端 B：视觉识别节点
-
-1. 新开 PowerShell -> `wsl -d Ubuntu`
-2. `docker exec -it ros2-demo bash`
-3. 启动节点：
-   ```bash
-   cd /root/workspace
-   source /opt/ros/humble/setup.bash
-   source install/setup.bash
-   ros2 run demos vision_recognition_node
-   ```
-
-### 📺 终端 C：软总线模拟器
-
-1. 新开 PowerShell -> `wsl -d Ubuntu`
-2. `docker exec -it ros2-demo bash`
-3. 启动模拟器：
-   ```bash
-   cd /root/workspace
-   source /opt/ros/humble/setup.bash
-   source install/setup.bash
-   ros2 run demos pda_softbus_monitor
-   ```
-
-### 📺 终端 D：机器人核心大脑
-
-1. 新开 PowerShell -> `wsl -d Ubuntu`
-2. `docker exec -it ros2-demo bash`
-3. 启动执行体：
-   ```bash
-   cd /root/workspace
-   source /opt/ros/humble/setup.bash
-   source install/setup.bash
-   ros2 run demos robot_executor
-   ```
-
-### 📺 终端 E：赛事总控调度台（发号施令）
+### 📺 终端 B：赛事总控调度台（发号施令）
+在此终端中模拟护士手持 PDA 靠近病床，触发任务。
 
 1. 新开 PowerShell -> `wsl -d Ubuntu`
 2. `docker exec -it ros2-demo bash`
