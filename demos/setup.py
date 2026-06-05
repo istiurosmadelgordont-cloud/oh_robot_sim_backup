@@ -39,6 +39,7 @@ setup(
             'ward_task_server = demos.ward_task_server:main',
             'robot_executor = demos.robot_executor:main',
             'vision_recognition_node = demos.vision_recognition_node:main',
+            'ward_ui_node = demos.ward_ui_node:main',
         ],
     },
 )

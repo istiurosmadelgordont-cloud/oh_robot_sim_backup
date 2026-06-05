@@ -48,10 +48,18 @@ def generate_launch_description():
         output='screen'
     )
 
+    # 6. UI Node
+    ui_node = Node(
+        package='demos',
+        executable='ward_ui_node',
+        name='ward_ui_node',
+        output='screen'
+    )
+
     # Delay starting the python nodes slightly to allow Gazebo and Nav2 to initialize
     delayed_nodes = TimerAction(
         period=5.0,
-        actions=[vision_node, softbus_node, executor_node, task_server_node]
+        actions=[vision_node, softbus_node, executor_node, task_server_node, ui_node]
     )
 
     return LaunchDescription([

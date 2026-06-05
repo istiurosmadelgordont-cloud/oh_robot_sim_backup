@@ -27,6 +27,14 @@ class WardTaskServer(Node):
             10
         )
         
+        # Subscriber for PDA commands (from UI)
+        self.cmd_sub = self.create_subscription(
+            String,
+            '/pda_command',
+            self.pda_command_callback,
+            10
+        )
+        
         # Coordinates from hospital_ward.classic.world
         # bed_w1_* are at y=3.9 (north ward), bed_w2_* at y=-3.9 (south ward)
         self.screens = {
@@ -94,6 +102,14 @@ class WardTaskServer(Node):
             self.get_logger().info(f'🚀 已将取药任务下发至智能执行体: 前往药房抓取 {order["medicine"]}')
         else:
             self.get_logger().info('无效的输入。')
+
+    def pda_command_callback(self, msg):
+        cmd = msg.data.strip()
+        self.get_logger().info(f'📱 收到 UI 终端指令: {cmd}')
+        if cmd in ['0', '1', '2', '3', '4', '5', '6', '7', '8']:
+            self.teleport_pda(cmd)
+        else:
+            self.get_logger().warn(f'⚠️ 未知指令: {cmd}')
 
 def input_thread(node):
     print("\n--- 虚拟 PDA 传送台 ---")

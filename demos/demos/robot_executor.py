@@ -40,6 +40,11 @@ class RobotExecutor(Node):
         self.vision_target = None
         self.nav_timeout = 120.0
         self._active_goal_handle = None
+        self.waiting_for_sign = False
+        
+        self.sign_sub = self.create_subscription(
+            String, '/pda_sign_confirm', self.sign_callback, 10,
+            callback_group=self.cb_group)
         
         self.get_logger().info('🤖 复合智能执行体 (Mobile Manipulator) 已启动，等待取药任务...')
         
@@ -60,6 +65,11 @@ class RobotExecutor(Node):
         # Run in separate thread to keep executor callback threads free for Nav2/vision responses
         threading.Thread(target=self.execute_task, args=(task,), daemon=True).start()
         
+    def sign_callback(self, msg):
+        if self.waiting_for_sign:
+            self.send_status('📱 [来自 PDA]: 收到签收确认指令！')
+            self.waiting_for_sign = False
+            
     def vision_callback(self, msg):
         self.vision_target = msg
         
@@ -215,8 +225,16 @@ class RobotExecutor(Node):
         self.navigate_to(task['bed_x'], bed_y_nav)
         
         # ====== Phase 7: Delivery ======
-        self.send_status('药品已送达，请签收')
-        time.sleep(2.0)
+        self.send_status('药品已送达，请签收 (等待护士在虚拟 PDA 点击确认...)')
+        
+        self.waiting_for_sign = True
+        wait_start = time.time()
+        while self.waiting_for_sign:
+            time.sleep(0.5)
+            if time.time() - wait_start > 300.0: # 5 min timeout
+                self.send_status('⚠️ 签收等待超时！')
+                break
+                
         self.send_status('🦾 释放夹爪，交付药品')
         time.sleep(1.0)
         

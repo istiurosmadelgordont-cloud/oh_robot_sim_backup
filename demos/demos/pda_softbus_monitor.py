@@ -5,11 +5,14 @@ import rclpy
 from rclpy.node import Node
 from tf2_ros import TransformException
 from tf2_ros.buffer import Buffer
-from tf2_ros.transform_listener import TransformListener
+from std_msgs.msg import String
 
 class PDASoftBusMonitor(Node):
     def __init__(self):
         super().__init__('pda_softbus_monitor')
+
+        # Publisher for softbus status (for UI)
+        self.status_pub = self.create_publisher(String, '/softbus_status', 10)
 
         # 硬编码 8 个床头屏的绝对坐标 (x, y)
         self.screens = {
@@ -79,6 +82,9 @@ class PDASoftBusMonitor(Node):
                     f'🔊 [语音播报]: "身份验证通过，可执行医嘱，并同步药品需求至智能执行体"\n'
                     f'========================================\n'
                 )
+                status_msg = String()
+                status_msg.data = f'connected:{self.connected_screen}'
+                self.status_pub.publish(status_msg)
         else:
             # 当前已有连接，计算当前机器人与【已连接屏幕】的距离
             sx, sy = self.screens[self.connected_screen]
@@ -94,6 +100,9 @@ class PDASoftBusMonitor(Node):
                     f'----------------------------------------\n'
                 )
                 self.connected_screen = None
+                status_msg = String()
+                status_msg.data = 'disconnected'
+                self.status_pub.publish(status_msg)
 
 def main(args=None):
     rclpy.init(args=args)
