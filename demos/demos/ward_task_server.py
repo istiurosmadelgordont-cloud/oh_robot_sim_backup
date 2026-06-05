@@ -30,14 +30,14 @@ class WardTaskServer(Node):
         # Coordinates from hospital_ward.classic.world
         # bed_w1_* are at y=3.9 (north ward), bed_w2_* at y=-3.9 (south ward)
         self.screens = {
-            '1': ('Bed_W1_1', -4.85, 4.85),
-            '2': ('Bed_W1_2', -2.95, 4.85),
-            '3': ('Bed_W1_3', -1.05, 4.85),
-            '4': ('Bed_W1_4',  0.85, 4.85),
-            '5': ('Bed_W2_1', -4.85, -4.85),
-            '6': ('Bed_W2_2', -2.95, -4.85),
-            '7': ('Bed_W2_3', -1.05, -4.85),
-            '8': ('Bed_W2_4',  0.85, -4.85),
+            '1': ('Bed_W1_1', -4.85, 3.9),
+            '2': ('Bed_W1_2', -2.95, 3.9),
+            '3': ('Bed_W1_3', -1.05, 3.9),
+            '4': ('Bed_W1_4',  0.85, 3.9),
+            '5': ('Bed_W2_1', -4.85, -3.9),
+            '6': ('Bed_W2_2', -2.95, -3.9),
+            '7': ('Bed_W2_3', -1.05, -3.9),
+            '8': ('Bed_W2_4',  0.85, -3.9),
         }
         
         self.medical_orders = {
@@ -83,7 +83,7 @@ class WardTaskServer(Node):
             # Dispatch task
             task_data = {
                 'bed': name,
-                'bed_x': sx,
+                'bed_x': sx + 0.75,
                 'bed_y': sy,
                 'medicine': order['medicine'],
                 'qr_code': order['qr_code']
